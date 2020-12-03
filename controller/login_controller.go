@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"user_api/middleware"
+	"user_api/model"
 	"user_api/service"
 )
 
@@ -13,6 +15,8 @@ var _ LoginController = &loginController{}
 
 type LoginController interface {
 	Login(rw http.ResponseWriter, r *http.Request)
+	Register(rw http.ResponseWriter, r *http.Request)
+	ListAllUsers(rw http.ResponseWriter, r *http.Request)
 }
 
 type loginController struct {
@@ -48,11 +52,59 @@ func (l *loginController) Login(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
+	middleware.CacheMap[userIns.Token] = *userIns
+	RenderJson(rw, http.StatusOK, struct {
+		Message string `json:"message"`
+		Token string `json:"token"`
+	}{
+		Message: fmt.Sprintf("Hey %s, Welcome!", userIns.Name),
+		Token: userIns.Token,
+	})
+	return
+}
+
+func (l *loginController) Register(rw http.ResponseWriter, r *http.Request) {
+
+	var userIns model.User
+
+	if ok := ParseJSON(rw, r.Body, &userIns); !ok {
+		return
+	}
+
+	err := l.userSrv.Register(&userIns)
+	if err != nil {
+		RenderJson(rw, http.StatusBadRequest, struct {
+			Message string `json:"message"`
+			ErrorMessage string `json:"error_message"`
+		}{
+			Message: "something went wrong!.Please try after sometime.",
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
 	RenderJson(rw, http.StatusOK, struct {
 		Message string `json:"message"`
 	}{
-		fmt.Sprintf("Hey %s, Welcome!", userIns.Name),
+		fmt.Sprintf("Registration successfull!."),
 	})
+	return
+}
+
+func (l *loginController) ListAllUsers(rw http.ResponseWriter, r *http.Request) {
+
+	usersList, err := l.userSrv.List()
+	if err != nil {
+		RenderJson(rw, http.StatusBadRequest, struct {
+			Message string `json:"message"`
+		}{
+			"something went wrong!.Please try after sometime.",
+		})
+		return
+	}
+
+	RenderJson(rw, http.StatusOK, usersList)
 	return
 }
 
@@ -82,7 +134,7 @@ func ParseJSON(w http.ResponseWriter, params io.ReadCloser, data interface{}) bo
 
 	e := struct {
 		Message string `json:"message"`
-		Err     string  `json:"err"`
+		Err     string `json:"err"`
 	}{
 		Message: "Invalid JSON",
 		Err:     err.Error(),

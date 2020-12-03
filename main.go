@@ -2,6 +2,8 @@ package main
 
 import (
 	"user_api/constants"
+	"user_api/middleware"
+	"user_api/model"
 	"user_api/router"
 
 	"context"
@@ -12,6 +14,11 @@ import (
 	"syscall"
 	"time"
 )
+
+func init() {
+	log.Println("initiating cache")
+	middleware.CacheMap = make(map[string]model.User)
+}
 
 func main() {
 

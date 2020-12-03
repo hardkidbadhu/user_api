@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"time"
+	"user_api/model"
 )
 
 type customWriter struct {
@@ -16,6 +17,8 @@ func (cw *customWriter) WriteHeader(code int) {
 	cw.statusCode = code
 	cw.ResponseWriter.WriteHeader(code)
 }
+
+var CacheMap map[string]model.User
 
 func LoggingHandler(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +42,28 @@ func RecoverHandler(next http.Handler) http.Handler {
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}()
+		next.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(fn)
+}
+
+// Prevent abnormal shutdown while panic
+func PostLogin(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+
+		auth := r.Header.Get("auth-token")
+		if len(auth) != 36 {
+			http.Error(w, "invalid auth-token", http.StatusBadRequest)
+			return
+		}
+		val, ok := CacheMap[auth]
+		if !ok {
+			http.Error(w, "Please login to continue.", http.StatusBadRequest)
+			return
+		}
+
+		log.Printf("authenticated user - %s", val.Name)
+
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)

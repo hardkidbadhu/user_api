@@ -1,16 +1,16 @@
 package model
 
-import "time"
-
 type User struct {
 	Id          int
-	UserName    string
-	Password    string
-	Name        string
-	Age         int
-	Gender      string
-	PhoneNumber string
-	EmailID     string
-	CreatedTime *time.Time
-	UpdatedTime *time.Time
+	UserName    string     `json:"user_name"`
+	PasswordStr string     `json:"password"`
+	Password    string     `json:"-"`
+	Name        string     `json:"name"`
+	Age         int        `json:"age"`
+	Gender      string     `json:"gender"`
+	PhoneNumber string     `json:"phone_number"`
+	EmailID     string     `json:"email_id"`
+	CreatedTime string `json:"created_time"`
+	UpdatedTime string `json:"updated_time"`
+	Token       string     `json:"-"`
 }

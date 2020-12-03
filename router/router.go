@@ -39,6 +39,8 @@ func NewRouter(logger *log.Logger) *http.ServeMux {
 
 	mux.Handle("/api/v1/ping", middleware.LoggingHandler(middleware.RecoverHandler(http.HandlerFunc(pingCtrl.Ping))))
 	mux.Handle("/api/v1/login", middleware.LoggingHandler(middleware.RecoverHandler(http.HandlerFunc(loginCtrl.Login))))
+	mux.Handle("/api/v1/register", middleware.LoggingHandler(middleware.RecoverHandler(http.HandlerFunc(loginCtrl.Register))))
+	mux.Handle("/api/v1/list/users", middleware.LoggingHandler(middleware.RecoverHandler(middleware.PostLogin(http.HandlerFunc(loginCtrl.ListAllUsers)))))
 
 	return mux
 }
